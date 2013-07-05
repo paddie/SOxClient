@@ -272,14 +272,14 @@ def main():
         "script_v" : subprocess.Popen(["/usr/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
     # update
-    # 4
+    # 5
     machine_dict(doc)
     sophos_dict(doc)
     security_dict(doc)
     installed_apps(doc)
     recon_dict(doc)
     softwareupdate(doc)
-    print doc
+    # print doc
 
     # print "softwareupdate: ", doc["softwareupdate"]
     # print "debug: Successfully registered machine data"
