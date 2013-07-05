@@ -272,7 +272,7 @@ def main():
         "script_v" : subprocess.Popen(["/usr/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
     # update
-    # 2
+    # 3
     machine_dict(doc)
     sophos_dict(doc)
     security_dict(doc)
