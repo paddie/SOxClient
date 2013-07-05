@@ -276,15 +276,15 @@ def main():
     machine_dict(doc)
     sophos_dict(doc)
     security_dict(doc)
-    # installed_apps(doc)
+    installed_apps(doc)
     recon_dict(doc)
-    # softwareupdate(doc)
+    softwareupdate(doc)
     print doc
 
     # print "softwareupdate: ", doc["softwareupdate"]
     # print "debug: Successfully registered machine data"
     # pp.pprint(doc)
-    # postMachineSpecs(server_ip, doc)
+    postMachineSpecs(server_ip, doc)
 
 if __name__ == '__main__':
 	main()
