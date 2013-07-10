@@ -269,7 +269,7 @@ def main():
         'datetime':int(time.time()), # iso 1970
         'time':today.strftime("%H:%M:%S"),
         'users':users(),
-        "script_v" : subprocess.Popen(["/usr/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
+        "script_v" : subprocess.Popen(["/usr/local/git/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
     # update
     # 5
