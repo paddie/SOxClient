@@ -134,7 +134,7 @@ def log_information(path='/Library/Logs/Sophos Anti-Virus.log'):
         mtime = time.strftime("%d/%m/%y",time.localtime(os.path.getmtime(path)))
         log.close()
         
-        return vers.split(": ")[1].split(",")[0], mtime
+        return vers.split(": ")[1].split(",")[0][7:], mtime
         # return vers[31:-15], mtime
     else:
         # if no log is at this position
@@ -209,7 +209,7 @@ def machine_dict(doc):
     hostname = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
 
     doc.update({
-        'serial':machine["serial_number"],
+        '_id':machine["serial_number"],
         # 'Old_serial':old_serial,
         'osx':str(osx_vers),
         'model':machine["machine_model"],
@@ -245,6 +245,7 @@ def mongo_conn(ip,db='sox'):
 
 def postMachineSpecs(ip, doc):
     params = json.dumps(doc)
+    # print params
     try:
         headers = {"Content-type": "application/x-www-form-urlencoded",
                 "Accept": "text/plain"}
@@ -257,33 +258,22 @@ def postMachineSpecs(ip, doc):
     # urllib2.urlopen("localhost:6060/updateMachine", jdata)
 
 def main():
+    # server_ip = "localhost:6060" # localhost
     server_ip = "152.146.38.56:6060" # static IP for the mini-server 
-    # server_ip = "localhost:6060"
-    # main_db = "sox" # db name
-    # collection = "machines" # collection name
     
-    # db = mongo_conn(server_ip,db=main_db)
-    today = datetime.now()
     doc = {
-        'date': today.strftime("%m/%d/%y"),
-        'datetime':int(time.time()), # iso 1970
-        'time':today.strftime("%H:%M:%S"),
         'users':users(),
         "script_v" : subprocess.Popen(["/usr/local/git/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
     # update
-    # 6
     machine_dict(doc)
     sophos_dict(doc)
     security_dict(doc)
     installed_apps(doc)
     recon_dict(doc)
     softwareupdate(doc)
-    # print doc
-
-    # print "softwareupdate: ", doc["softwareupdate"]
-    # print "debug: Successfully registered machine data"
-    # pp.pprint(doc)
+    
+    # post update to server
     postMachineSpecs(server_ip, doc)
 
 if __name__ == '__main__':
