@@ -216,7 +216,7 @@ def machine_dict(doc):
         'hostname':hostname,
         'cpu':"%s %s" % (machine["cpu_type"], machine["current_processor_speed"]),
         'cores':machine["number_processors"],
-        'memory':machine["physical_memory"],
+        'memory':machine["physical_memory"][0:-3],
         'ip':ip
     })
 
