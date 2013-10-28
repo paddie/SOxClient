@@ -188,10 +188,11 @@ def machine_dict(doc):
         stdout=subprocess.PIPE).communicate()[0].split("\n")
     osx_vers = "OSX %s (%s)" % (l[1].split(":\t")[-1],l[2].split(":\t")[-1])
     
-    # *******************************
-    # IP - more complicated than it sounds..
-    # *******************************
-    ip = socket.gethostbyname(socket.gethostname())
+    hostname = socket.gethostname()
+    if hostname == "":
+        hostname = socket.getfqdn()
+
+    ip = socket.gethostbyname(hostname)
 
     # *****************************
     # HOSTNAME - also a bit stupid
