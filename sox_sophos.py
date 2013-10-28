@@ -191,22 +191,12 @@ def machine_dict(doc):
     # *******************************
     # IP - more complicated than it sounds..
     # *******************************
-    ips = socket.gethostbyname_ex(socket.gethostname())[2]
-    ip = ""
-    for i in ips:
-        # if on the work network, the third IP value is either 38 or 210 or 113
-        if i.split(".")[2] in ['38', '210', '113']:
-            ip = i
-            break
-    if ip == "":
-        # if on home network, the ip might not be xx.xx.[38/210].xx
-        # - simply go with the first of the ip's
-        ip = socket.gethostbyname(socket.gethostname())
-    
+    ip = socket.gethostbyname(socket.gethostname())
+
     # *****************************
     # HOSTNAME - also a bit stupid
     # *****************************
-    hostname = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
+    hostname = socket.gethostname().split(".")[0]
 
     doc.update({
         '_id':machine["serial_number"],
@@ -269,7 +259,7 @@ def main():
     machine_dict(doc)
     sophos_dict(doc)
     security_dict(doc)
-    installed_apps(doc)
+    # installed_apps(doc)
     recon_dict(doc)
     softwareupdate(doc)
     
