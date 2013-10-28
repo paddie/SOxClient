@@ -192,7 +192,17 @@ def machine_dict(doc):
     if hostname == "":
         hostname = socket.getfqdn()
 
-    ip = socket.gethostbyname(hostname)
+    ethernet = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en0"], stdout=subprocess.PIPE).communicate()[0][0:-1]
+    wifi = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en1"], stdout=subprocess.PIPE).communicate()[0][0:-1]
+
+    ip = ""
+    if "152.146." in ethernet:
+        ip = ethernet
+    else:
+        if "152.146." in wifi:
+            ip = wifi
+        else:
+            ip = ""
 
     # *****************************
     # HOSTNAME - also a bit stupid
@@ -262,8 +272,8 @@ def main():
     security_dict(doc)
     # installed_apps(doc)
     recon_dict(doc)
-    softwareupdate(doc)
-    
+    # softwareupdate(doc)
+    print doc
     # post update to server
     postMachineSpecs(server_ip, doc)
 
