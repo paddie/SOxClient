@@ -200,6 +200,12 @@ def machine_dict(doc):
         else:
             ip = ""
 
+    if ip == "":
+        if len(ethernet) > 0:
+            ip = ethernet
+        else:
+            ip = wifi
+
     # *****************************
     # HOSTNAME - also a bit stupid
     # *****************************
@@ -268,8 +274,8 @@ def main():
     security_dict(doc)
     # installed_apps(doc)
     recon_dict(doc)
-    # softwareupdate(doc)
-    print doc
+    softwareupdate(doc)
+    # print doc
     # post update to server
     postMachineSpecs(server_ip, doc)
 
