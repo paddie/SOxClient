@@ -187,10 +187,6 @@ def machine_dict(doc):
     l = subprocess.Popen(["sw_vers"],
         stdout=subprocess.PIPE).communicate()[0].split("\n")
     osx_vers = "OSX %s (%s)" % (l[1].split(":\t")[-1],l[2].split(":\t")[-1])
-    
-    hostname = socket.gethostname()
-    if hostname == "":
-        hostname = socket.getfqdn()
 
     ethernet = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en0"], stdout=subprocess.PIPE).communicate()[0][0:-1]
     wifi = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en1"], stdout=subprocess.PIPE).communicate()[0][0:-1]
@@ -207,14 +203,14 @@ def machine_dict(doc):
     # *****************************
     # HOSTNAME - also a bit stupid
     # *****************************
-    hostname = socket.gethostname().split(".")[0]
+    hostname = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
 
     doc.update({
         '_id':machine["serial_number"],
         # 'Old_serial':old_serial,
         'osx':str(osx_vers),
         'model':machine["machine_model"],
-        'hostname':hostname,
+        'hostname':hostname.split(".")[0],
         'cpu':"%s %s" % (machine["cpu_type"], machine["current_processor_speed"]),
         'cores':machine["number_processors"],
         'memory':machine["physical_memory"][0:-3],
