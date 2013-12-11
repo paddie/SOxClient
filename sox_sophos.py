@@ -10,6 +10,8 @@ import tempfile
 import httplib
 import json
 
+
+
 # sophos antivirus log is in binary format => convert to xml1
 def plistFromPath(plist_path):
     # convertPlist(plist_path, 'xml1')
@@ -169,10 +171,22 @@ def security_dict(doc):
 
 # Simple check for the Recon LaunchAgent
 def recon_dict(doc):
-    old = "/Library/Application Support/JAMF/scripts/submitInventory.sh"
+    # old = "/Library/Application Support/JAMF/scripts/submitInventory.sh"
     new = "/Library/Application Support/WPP/Inventory/scripts/submitInventory.sh"
 
-    doc.update({'recon':os.path.isfile(new)})
+    recon_conf = "/Library/Application Support/WPP/Inventory/conf/com.wpp.recon.plist"
+
+    recon_version = "N/A"
+    if os.path.isfile(recon_conf):
+        # print "file exists"
+        # recon_version = subprocess.call(["/usr/bin/defaults", "read", recon_conf, "version"])
+        recon_version = subprocess.Popen(["/usr/bin/defaults", "read", recon_conf, "version"],stdout=subprocess.PIPE).communicate()[0][:-1]
+
+
+    doc.update({
+        'recon':os.path.isfile(new),
+        'recon_version':recon_version}
+    )
     
 
 def machine_dict(doc):
