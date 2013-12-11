@@ -174,10 +174,10 @@ def recon_dict(doc):
     # old = "/Library/Application Support/JAMF/scripts/submitInventory.sh"
     new = "/Library/Application Support/WPP/Inventory/scripts/submitInventory.sh"
 
-    recon_conf = "/Library/Application Support/WPP/Inventory/conf/com.wpp.recon.plist"
+    recon_conf = "/Library/Application Support/WPP/Inventory/conf/com.wpp.recon"
 
     recon_version = "N/A"
-    if os.path.isfile(recon_conf):
+    if os.path.isfile(recon_conf + ".plist"):
         # print "file exists"
         # recon_version = subprocess.call(["/usr/bin/defaults", "read", recon_conf, "version"])
         recon_version = subprocess.Popen(["/usr/bin/defaults", "read", recon_conf, "version"],stdout=subprocess.PIPE).communicate()[0][:-1]
