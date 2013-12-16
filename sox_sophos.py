@@ -223,18 +223,28 @@ def machine_dict(doc):
     # *****************************
     # HOSTNAME - also a bit stupid
     # *****************************
-    hostname = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
+    computername = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
+    localhostname = subprocess.Popen(["/usr/sbin/scutil","--get", "LocalHostName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
+    hostname = subprocess.Popen(["/usr/sbin/scutil","--get", "HostName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
+    # defaults read /Library/Preferences/SystemConfiguration/com.apple.smb.server NetBIOSName
+    netbios_name = subprocess.Popen(["/usr/bin/defaults", "read", "/Library/Preferences/SystemConfiguration/com.apple.smb.server", "NetBIOSName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
 
     doc.update({
         '_id':machine["serial_number"],
         # 'Old_serial':old_serial,
         'osx':str(osx_vers),
         'model':machine["machine_model"],
-        'hostname':hostname.split(".")[0],
+        'hostname':computername.split(".")[0],
+        'device_names': {
+            'computername':computername.split(".")[0],
+            'hostname':hostname.split(".")[0],
+            'localhostname':localhostname.split(".")[0],
+            'netbiosname':netbios_name.lower(),    
+        },        
         'cpu':"%s %s" % (machine["cpu_type"], machine["current_processor_speed"]),
         'cores':machine["number_processors"],
         'memory':machine["physical_memory"][0:-3],
-        'ip':ip
+        'ip':ip,
     })
 
 def users():
@@ -253,12 +263,12 @@ def users():
 
     return users
 
-def mongo_conn(ip,db='sox'):
-	try:
-		return Database(Connection(ip), db)
-	except:
-	    print "debug: Could not connect to mongo database at ip %s" % ip
-        sys.exit(2)
+# def mongo_conn(ip,db='sox'):
+# 	try:
+# 		return Database(Connection(ip), db)
+# 	except:
+# 	    print "debug: Could not connect to mongo database at ip %s" % ip
+#         sys.exit(2)
 
 def postMachineSpecs(ip, doc):
     params = json.dumps(doc)
@@ -290,6 +300,7 @@ def main():
     recon_dict(doc)
     softwareupdate(doc)
     # print doc
+
     # post update to server
     postMachineSpecs(server_ip, doc)
 
