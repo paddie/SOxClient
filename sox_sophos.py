@@ -142,32 +142,95 @@ def log_information(path='/Library/Logs/Sophos Anti-Virus.log'):
         # if no log is at this position
         return "N/A", "N/A"
 
-def firewall_state(path='/Library/Preferences/com.apple.alf.plist'):
-	plist = convertToXML(path)
-	apps = []
-	try:
-	    for app in plist['applications']:
-	        try:
-	            apps.append(app['bundleid'])
-	        except:
-	            pass
-	    return plist['globalstate'], apps
-	except:
-	    return 0, apps
+# In /usr/libexec/ApplicationFirewall is the Firewall command, the binary of the actual application layer firewall and socketfilterfw,
+# which configures the firewall. To configure the firewall to block all incoming traffic:
+# /usr/libexec/ApplicationFirewall/socketfilterfw --setblockall on
 
-def security_dict(doc):
-    firewall, apps = firewall_state()
-    # ENABLE FIREWALL IFF OFF
-    # if not firewall: # firewall off
-    #     os.system("defaults write /Library/Preferences/com.apple.alf globalstate -int 1")
-    if firewall == 0:
-        state = False
-    else:
-        state = True
+# A couple of global options that can be set. Stealth Mode:
+# /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+
+# Firewall logging:
+# /usr/libexec/ApplicationFirewall/socketfilterfw --setloggingmode on
+
+# To start the firewall:
+# /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+
+def char_int_to_bool(char):
+    if char == "0":
+        return False
+
+    return True
+
+def firewall(doc):
+    # /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+    fw_plist = "/usr/libexec/ApplicationFirewall/com.apple.alf"
+
+    fw_globalstate = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "globalstate"],stdout=subprocess.PIPE).communicate()[0][:-1]
+    fw_globalstate = char_int_to_bool(fw_globalstate)
+
+    fw_logging = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "loggingenabled"],stdout=subprocess.PIPE).communicate()[0][:-1]
+    fw_logging = char_int_to_bool(fw_logging)
+
+    fw_stealth = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "stealthenabled"],stdout=subprocess.PIPE).communicate()[0][:-1]
+    fw_stealth = char_int_to_bool(fw_stealth)
+    # print "firewall", fw_globalstate,"fw_stealth: ", fw_stealth, "fw_logging:",fw_logging
+
+
     doc.update({
-        'firewall':state,
-        # 'signed_apps':apps
+        "firewall":fw_globalstate,
+        "fw_stealth":fw_stealth,
+        "fw_logging":fw_logging,
     })
+
+# def firewall_state(doc):
+#     # /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+#     fw_state = subprocess.Popen(["/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate"],stdout=subprocess.PIPE).communicate()[0][:-1]
+#     # 'Firewall is enabled. (State = 1)'
+#     # 'Firewall is disabled. (State = 0)'
+#     (fw_status, fw_setting) = fw_state.split(". ")
+
+#     # get enabled | disabled state
+#     fw_status = fw_status.split()[-1]
+#     # get [0 | 1 | 2] setting
+#     fw_setting = int(fw_setting[-2:-1])
+
+#     firewall = False
+
+#     if fw_setting in [1,2]:
+#         firewall = True
+
+#     doc.update({
+#         "firewall":firewall,
+#         "fw_status":fw_status,
+#         "fw_setting":fw_setting,
+#     })
+
+# def firewall_state(path='/Library/Preferences/com.apple.alf.plist'):
+# 	plist = convertToXML(path)
+# 	apps = []
+# 	try:
+# 	    for app in plist['applications']:
+# 	        try:
+# 	            apps.append(app['bundleid'])
+# 	        except:
+# 	            pass
+# 	    return plist['globalstate'], apps
+# 	except:
+# 	    return 0, apps
+
+# def security_dict(doc):
+#     firewall, apps = firewall_state()
+#     # ENABLE FIREWALL IFF OFF
+#     # if not firewall: # firewall off
+#     #     os.system("defaults write /Library/Preferences/com.apple.alf globalstate -int 1")
+#     if firewall == 0:
+#         state = False
+#     else:
+#         state = True
+#     doc.update({
+#         'firewall':state,
+#         # 'signed_apps':apps
+#     })
 
 # Simple check for the Recon LaunchAgent
 def recon_dict(doc):
@@ -292,14 +355,14 @@ def main():
         'users':users(),
         "script_v" : subprocess.Popen(["/usr/local/git/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
-    # update
+    
     machine_dict(doc)
     sophos_dict(doc)
-    security_dict(doc)
-    # installed_apps(doc)
+    firewall(doc)
     recon_dict(doc)
     softwareupdate(doc)
-    # print doc
+    # for k,v in doc.items():
+    #     print k, ": ", v
 
     # post update to server
     postMachineSpecs(server_ip, doc)
