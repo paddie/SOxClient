@@ -10,8 +10,6 @@ import tempfile
 import httplib
 import json
 
-
-
 # sophos antivirus log is in binary format => convert to xml1
 def plistFromPath(plist_path):
     # convertPlist(plist_path, 'xml1')
@@ -166,6 +164,7 @@ def firewall(doc):
     fw_plist = "/Library/Preferences/com.apple.alf"
 
     fw_globalstate = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "globalstate"],stdout=subprocess.PIPE).communicate()[0][:-1]
+    fw_mode = int(fw_globalstate)
     fw_globalstate = char_int_to_bool(fw_globalstate)
 
     fw_logging = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "loggingenabled"],stdout=subprocess.PIPE).communicate()[0][:-1]
@@ -178,59 +177,10 @@ def firewall(doc):
 
     doc.update({
         "firewall":fw_globalstate,
+        "fw_mode":fw_mode,
         "fw_stealth":fw_stealth,
         "fw_logging":fw_logging,
     })
-
-# def firewall_state(doc):
-#     # /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
-#     fw_state = subprocess.Popen(["/usr/libexec/ApplicationFirewall/socketfilterfw", "--getglobalstate"],stdout=subprocess.PIPE).communicate()[0][:-1]
-#     # 'Firewall is enabled. (State = 1)'
-#     # 'Firewall is disabled. (State = 0)'
-#     (fw_status, fw_setting) = fw_state.split(". ")
-
-#     # get enabled | disabled state
-#     fw_status = fw_status.split()[-1]
-#     # get [0 | 1 | 2] setting
-#     fw_setting = int(fw_setting[-2:-1])
-
-#     firewall = False
-
-#     if fw_setting in [1,2]:
-#         firewall = True
-
-#     doc.update({
-#         "firewall":firewall,
-#         "fw_status":fw_status,
-#         "fw_setting":fw_setting,
-#     })
-
-# def firewall_state(path='/Library/Preferences/com.apple.alf.plist'):
-# 	plist = convertToXML(path)
-# 	apps = []
-# 	try:
-# 	    for app in plist['applications']:
-# 	        try:
-# 	            apps.append(app['bundleid'])
-# 	        except:
-# 	            pass
-# 	    return plist['globalstate'], apps
-# 	except:
-# 	    return 0, apps
-
-# def security_dict(doc):
-#     firewall, apps = firewall_state()
-#     # ENABLE FIREWALL IFF OFF
-#     # if not firewall: # firewall off
-#     #     os.system("defaults write /Library/Preferences/com.apple.alf globalstate -int 1")
-#     if firewall == 0:
-#         state = False
-#     else:
-#         state = True
-#     doc.update({
-#         'firewall':state,
-#         # 'signed_apps':apps
-#     })
 
 # Simple check for the Recon LaunchAgent
 def recon_dict(doc):
@@ -325,13 +275,6 @@ def users():
     		    users.append(folder)
 
     return users
-
-# def mongo_conn(ip,db='sox'):
-# 	try:
-# 		return Database(Connection(ip), db)
-# 	except:
-# 	    print "debug: Could not connect to mongo database at ip %s" % ip
-#         sys.exit(2)
 
 def postMachineSpecs(ip, doc):
     params = json.dumps(doc)
