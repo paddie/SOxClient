@@ -163,7 +163,7 @@ def char_int_to_bool(char):
 
 def firewall(doc):
     # /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
-    fw_plist = "/usr/libexec/ApplicationFirewall/com.apple.alf"
+    fw_plist = "/Library/Preferences/com.apple.alf"
 
     fw_globalstate = subprocess.Popen(["/usr/bin/defaults", "read", fw_plist, "globalstate"],stdout=subprocess.PIPE).communicate()[0][:-1]
     fw_globalstate = char_int_to_bool(fw_globalstate)
