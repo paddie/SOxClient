@@ -276,6 +276,51 @@ def users():
 
     return users
 
+class Network():
+    """using url: http://osxdaily.com/2007/01/18/airport-the-little-known-command-line-wireless-utility/"""
+    def __init__(self, ssid="N/A", bssid="N/A", sec=[]):
+        self.ssid = ssid
+        self.bssid = bssid
+        # self.rssi = rssi
+        # self.noise = noise
+        self.sec = sec
+        # self.hostname
+
+def scan_w():
+
+    airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+
+    ssids = []
+    if os.path.isfile(airport_path):
+        plist_str = subprocess.Popen([airport_path, "-s", "-x"],stdout=subprocess.PIPE).communicate()[0]
+        if len(plist_str) == 0:
+            return
+        plist_dict = plistlib.readPlistFromString(plist_str)
+
+        for d in plist_dict:
+
+            ssid = d.get("SSID_STR")
+            bssid = d.get("BSSID")
+            # rssi = d.get("RSSI")
+            # noise = d.get("NOISE")
+
+            # Decode security fields
+            sec = []
+            # RSN (Robust Security Network) = WPA2
+            if "RSN_IE" in d:
+                sec.append("WPA2")
+
+            # WPA... = WPA
+            if "WPA_IE" in d:
+                sec.append("WPA")
+            
+            n = Network(ssid, bssid, sec)
+            ssids.append(n.__dict__)
+
+        postWirelessScan("152.146.38.56:6060", ssids)
+    else:
+        print "No 'airport' utility located in " + airport_path
+
 def postMachineSpecs(ip, doc):
     params = json.dumps(doc)
     # print params
@@ -289,6 +334,17 @@ def postMachineSpecs(ip, doc):
         print "Couldn't connect to webserver on ip: ", ip
         print "Retrying in an hour.."
     # urllib2.urlopen("localhost:6060/updateMachine", jdata)
+
+def postWirelessScan(ip, ssids):
+    params = json.dumps(ssids)
+    try:
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                "Accept": "text/plain"}
+        conn = httplib.HTTPConnection(ip)
+        conn.request("POST", "/reportWirelessScan/", params, headers)
+        print "Wireless scan completed."
+    except Exception:
+        print "Couldn't connect to webserver on ip: ", ip
 
 def main():
     # server_ip = "localhost:6060" # localhost
@@ -309,6 +365,8 @@ def main():
 
     # post update to server
     postMachineSpecs(server_ip, doc)
+    scan_w()
+    
 
 if __name__ == '__main__':
 	main()
