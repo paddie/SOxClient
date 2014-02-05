@@ -278,15 +278,17 @@ def users():
 
 class Network():
     """using url: http://osxdaily.com/2007/01/18/airport-the-little-known-command-line-wireless-utility/"""
-    def __init__(self, ssid="N/A", bssid="N/A", sec=[]):
+    def __init__(self, ssid="N/A", bssid="N/A", sec=[], ip="", hostname=""):
         self.ssid = ssid
         self.bssid = bssid
         # self.rssi = rssi
         # self.noise = noise
         self.sec = sec
+        self.ip = ip
+        self.hostname = hostname
         # self.hostname
 
-def scan_w(ip):
+def scan_w(ip, hostname):
     if ip == "":
         print "Device not on local network. IP not in '152.146' range.",
         return
@@ -317,7 +319,7 @@ def scan_w(ip):
             if "WPA_IE" in d:
                 sec.append("WPA")
             
-            n = Network(ssid, bssid, sec)
+            n = Network(ssid, bssid, sec, ip, hostname)
             ssids.append(n.__dict__)
         print "posting wireless data.."
         postWirelessScan("152.146.38.56:6060", ssids)
@@ -369,9 +371,10 @@ def main():
     softwareupdate(doc)
 
     ip = doc["ip"]
+    hostname = doc["hostname"]
     # scan for wireless networks to help with diagnostics
     print "scanning for wireless networks: ip = ", ip
-    scan_w(ip)
+    scan_w(ip, hostnames)
 
     server_ip = "152.146.38.56:6060" # static IP for the mini-server 
     postMachineSpecs(server_ip, doc)
