@@ -374,7 +374,7 @@ def main():
     hostname = doc["hostname"]
     # scan for wireless networks to help with diagnostics
     print "scanning for wireless networks: ip = ", ip
-    scan_w(ip, hostnames)
+    scan_w(ip, hostname)
 
     server_ip = "152.146.38.56:6060" # static IP for the mini-server 
     postMachineSpecs(server_ip, doc)
