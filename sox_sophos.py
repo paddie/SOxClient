@@ -200,7 +200,23 @@ def recon_dict(doc):
         'recon':os.path.isfile(new),
         'recon_version':recon_version}
     )
-    
+
+def ipconfigs():
+    ips = []
+    for i in xrange(5):
+        interface = "en" + str(i)
+        ip = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", interface], stdout=subprocess.PIPE).communicate()[0][0:-1]
+        if len(ip) > 0:
+            ips.append(ip)
+
+    ip = ""
+    if len(ips) > 0:
+        for i in ips:
+            if "152.146." in i:
+                ip = i
+
+    return ip
+
 
 def machine_dict(doc):
     # machine specific info
@@ -215,23 +231,7 @@ def machine_dict(doc):
         stdout=subprocess.PIPE).communicate()[0].split("\n")
     osx_vers = "OSX %s (%s)" % (l[1].split(":\t")[-1],l[2].split(":\t")[-1])
 
-    ethernet = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en0"], stdout=subprocess.PIPE).communicate()[0][0:-1]
-    wifi = subprocess.Popen(["/usr/sbin/ipconfig", "getifaddr", "en1"], stdout=subprocess.PIPE).communicate()[0][0:-1]
-
-    ip = ""
-    if "152.146." in ethernet:
-        ip = ethernet
-    else:
-        if "152.146." in wifi:
-            ip = wifi
-        else:
-            ip = ""
-
-    if ip == "":
-        if len(ethernet) > 0:
-            ip = ethernet
-        else:
-            ip = wifi
+    ip = ipconfigs()
 
     # *****************************
     # HOSTNAME - also a bit stupid
@@ -286,7 +286,10 @@ class Network():
         self.sec = sec
         # self.hostname
 
-def scan_w():
+def scan_w(ip):
+    if ip == "":
+        print "Device not on local network. IP not in '152.146' range.",
+        return
 
     airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
 
@@ -316,7 +319,7 @@ def scan_w():
             
             n = Network(ssid, bssid, sec)
             ssids.append(n.__dict__)
-
+        print "posting wireless data.."
         postWirelessScan("152.146.38.56:6060", ssids)
     else:
         print "No 'airport' utility located in " + airport_path
@@ -348,25 +351,30 @@ def postWirelessScan(ip, ssids):
 
 def main():
     # server_ip = "localhost:6060" # localhost
-    server_ip = "152.146.38.56:6060" # static IP for the mini-server 
+    
     
     doc = {
         'users':users(),
         "script_v" : subprocess.Popen(["/usr/local/git/bin/git","describe"],stdout=subprocess.PIPE).communicate()[0][:-1],
     }
-    
+    # get ip, hostname etc.
     machine_dict(doc)
+    # sophos related info
     sophos_dict(doc)
+    # firewall setting etc.
     firewall(doc)
+    # check for recon, version etc.
     recon_dict(doc)
+    # check if there are any critical security updates
     softwareupdate(doc)
-    # for k,v in doc.items():
-    #     print k, ": ", v
 
-    # post update to server
+    ip = doc["ip"]
+    # scan for wireless networks to help with diagnostics
+    print "scanning for wireless networks: ip = ", ip
+    scan_w(ip)
+
+    server_ip = "152.146.38.56:6060" # static IP for the mini-server 
     postMachineSpecs(server_ip, doc)
-    scan_w()
     
-
 if __name__ == '__main__':
 	main()
