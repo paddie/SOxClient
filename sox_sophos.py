@@ -278,10 +278,10 @@ def users():
 
 class Network():
     """using url: http://osxdaily.com/2007/01/18/airport-the-little-known-command-line-wireless-utility/"""
-    def __init__(self, ssid="N/A", bssid="N/A", sec=[], ip="", hostname=""):
+    def __init__(self, ssid="N/A", bssid="N/A", sec=[], rssi=0, ip="", hostname=""):
         self.ssid = ssid
         self.bssid = bssid
-        # self.rssi = rssi
+        self.rssi = rssi
         # self.noise = noise
         self.sec = sec
         self.ip = ip
@@ -306,7 +306,7 @@ def scan_w(ip, hostname):
 
             ssid = d.get("SSID_STR")
             bssid = d.get("BSSID")
-            # rssi = d.get("RSSI")
+            rssi = d.get("RSSI")
             # noise = d.get("NOISE")
 
             # Decode security fields
@@ -319,7 +319,7 @@ def scan_w(ip, hostname):
             if "WPA_IE" in d:
                 sec.append("WPA")
             
-            n = Network(ssid, bssid, sec, ip, hostname)
+            n = Network(ssid, bssid, sec, rssi, ip, hostname)
             ssids.append(n.__dict__)
         print "posting wireless data.."
         postWirelessScan("152.146.38.56:6060", ssids)
