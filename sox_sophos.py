@@ -46,14 +46,15 @@ def runProcess(exe):
         if(retcode is not None):
             break
 
-"""
-Software Update Tool
-Copyright 2002-2009 Apple
+# """
+# Software Update Tool
+# Copyright 2002-2009 Apple
 
-Software Update found the following new or updated software:
-   * iTunesX-11.0.1
-    iTunes (11.0.1), 193391K [recommended]
-"""
+# Software Update found the following new or updated software:
+#    * iTunesX-11.0.1
+#     iTunes (11.0.1), 193391K [recommended]
+# """
+# lists all pending sopftware updates
 def softwareupdate(doc):
     # subprocess.check_output(*popenargs, **kwargs)
     collect_info = False
@@ -78,7 +79,8 @@ def softwareupdate(doc):
         })
      # = subprocess.Popen(["softwareupdate", "-l"],).split("\n")
 
-
+# returns the CFBundleShortVersionString of any application. Effectively the version
+# ID of any application (if the programmers have been kind enough to set it)
 def plist_version(path):
 	plist = "N/A"
 	try:
@@ -93,6 +95,8 @@ def plist_version(path):
 	except:
 		return "N/A"
 
+# List all installed applications
+# - we no longer report this list, to speed up the reporting.
 def installed_apps(doc):
 	# apps = walk()
     # tf = tempfile.TemporaryFile("w+b")
@@ -110,6 +114,8 @@ def installed_apps(doc):
 
     doc.update( {"apps":apps} )
 
+# Updates the dict with all the sophos antivirus related information
+# - SAV, Engine and the time of last update.
 def sophos_dict(doc):
     if not os.path.isfile('/Applications/Sophos Anti-Virus.app/Contents/Info.plist'):
         return doc.update({
@@ -125,6 +131,10 @@ def sophos_dict(doc):
         'virus_last_run':mtime,
     })
 
+# parse the log for information pertaining to the most recent 
+# sophos update. Returns the version of the virus definitions and the time of last update.
+# - using the modified time of the latest update migth not be the best approach
+#   but it has served decently so far.
 def log_information(path='/Library/Logs/Sophos Anti-Virus.log'):
     if os.path.isfile(path):
         log = open(path, 'r')
@@ -159,6 +169,7 @@ def char_int_to_bool(char):
 
     return True
 
+# Get firewall: stealth, logging and globalstate settings
 def firewall(doc):
     # /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
     fw_plist = "/Library/Preferences/com.apple.alf"
@@ -182,7 +193,7 @@ def firewall(doc):
         "fw_logging":fw_logging,
     })
 
-# Simple check for the Recon LaunchAgent
+# Check for the existence of the recon agent along with the installed version etc.
 def recon_dict(doc):
     # old = "/Library/Application Support/JAMF/scripts/submitInventory.sh"
     new = "/Library/Application Support/WPP/Inventory/scripts/submitInventory.sh"
@@ -201,7 +212,9 @@ def recon_dict(doc):
         'recon_version':recon_version}
     )
 
-def ipconfigs():
+# Run through every network interface and return only if one of the ips
+ # are prefixed by 152.146..
+def getIP():
     ips = []
     for i in xrange(5):
         interface = "en" + str(i)
@@ -217,7 +230,8 @@ def ipconfigs():
 
     return ip
 
-
+# Read machine specific information
+# - ip, hostname, serial, cpu, cores, memory..
 def machine_dict(doc):
     # machine specific info
     profile = subprocess.Popen(["/usr/sbin/system_profiler","-xml","SPHardwareDataType"], stdout=subprocess.PIPE).communicate()[0]
@@ -231,10 +245,10 @@ def machine_dict(doc):
         stdout=subprocess.PIPE).communicate()[0].split("\n")
     osx_vers = "OSX %s (%s)" % (l[1].split(":\t")[-1],l[2].split(":\t")[-1])
 
-    ip = ipconfigs()
+    ip = getIP()
 
     # *****************************
-    # HOSTNAME - also a bit stupid
+    # HOSTNAME - use scutil to read computer names etc.
     # *****************************
     computername = subprocess.Popen(["/usr/sbin/scutil","--get", "ComputerName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
     localhostname = subprocess.Popen(["/usr/sbin/scutil","--get", "LocalHostName"],stdout=subprocess.PIPE).communicate()[0].split("\n")[0]
@@ -260,6 +274,8 @@ def machine_dict(doc):
         'ip':ip,
     })
 
+# get a list of users in the '/Users' folder.
+# Ignores any files that are not folders, along with the 'Shared' folder.
 def users():
     # lists all folders '/Users'
     # - discards: Shared and any files in that folder
@@ -276,6 +292,21 @@ def users():
 
     return users
 
+def postMachineSpecs(ip, doc):
+    params = json.dumps(doc)
+    # print params
+    try:
+        headers = {"Content-type": "application/x-www-form-urlencoded",
+                "Accept": "text/plain"}
+        conn = httplib.HTTPConnection(ip)
+        conn.request("POST", "/updateMachine/", params, headers)
+        print "SOX script: Success!"
+    except Exception:
+        print "Couldn't connect to webserver on ip: ", ip
+        print "Retrying in an hour.."
+    # urllib2.urlopen("localhost:6060/updateMachine", jdata)
+
+# Class for storing a single access point
 class Network():
     """using url: http://osxdaily.com/2007/01/18/airport-the-little-known-command-line-wireless-utility/"""
     def __init__(self, ssid="N/A", bssid="N/A", sec=[], rssi=0, ip="", hostname=""):
@@ -325,20 +356,6 @@ def scan_w(ip, hostname):
         postWirelessScan("152.146.38.56:6060", ssids)
     else:
         print "No 'airport' utility located in " + airport_path
-
-def postMachineSpecs(ip, doc):
-    params = json.dumps(doc)
-    # print params
-    try:
-        headers = {"Content-type": "application/x-www-form-urlencoded",
-                "Accept": "text/plain"}
-        conn = httplib.HTTPConnection(ip)
-        conn.request("POST", "/updateMachine/", params, headers)
-        print "SOX script: Success!"
-    except Exception:
-        print "Couldn't connect to webserver on ip: ", ip
-        print "Retrying in an hour.."
-    # urllib2.urlopen("localhost:6060/updateMachine", jdata)
 
 def postWirelessScan(ip, ssids):
     params = json.dumps(ssids)
