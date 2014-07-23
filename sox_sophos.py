@@ -185,7 +185,6 @@ def firewall(doc):
     fw_stealth = char_int_to_bool(fw_stealth)
     # print "firewall", fw_globalstate,"fw_stealth: ", fw_stealth, "fw_logging:",fw_logging
 
-
     doc.update({
         "firewall":fw_globalstate,
         "fw_mode":fw_mode,
@@ -227,6 +226,7 @@ def getIP():
         for i in ips:
             if "152.146." in i:
                 ip = i
+                break
 
     return ip
 
@@ -296,8 +296,7 @@ def postMachineSpecs(ip, doc):
     params = json.dumps(doc)
     # print params
     try:
-        headers = {"Content-type": "application/x-www-form-urlencoded",
-                "Accept": "text/plain"}
+        headers = {"Content-Type": "application/json"}
         conn = httplib.HTTPConnection(ip)
         conn.request("POST", "/updateMachine/", params, headers)
         print "SOX script: Success!"
@@ -357,20 +356,19 @@ def scan_w(ip, hostname):
     else:
         print "No 'airport' utility located in " + airport_path
 
-def postWirelessScan(ip, ssids):
-    params = json.dumps(ssids)
-    try:
-        headers = {"Content-type": "application/x-www-form-urlencoded",
-                "Accept": "text/plain"}
-        conn = httplib.HTTPConnection(ip)
-        conn.request("POST", "/reportWirelessScan/", params, headers)
-        print "Wireless scan completed."
-    except Exception:
-        print "Couldn't connect to webserver on ip: ", ip
+# def postWirelessScan(ip, ssids):
+#     params = json.dumps(ssids)
+#     try:
+#         headers = {"Content-type": "application/x-www-form-urlencoded",
+#                 "Accept": "text/plain"}
+#         conn = httplib.HTTPConnection(ip)
+#         conn.request("POST", "/reportWirelessScan/", params, headers)
+#         print "Wireless scan completed."
+#     except Exception:
+#         print "Couldn't connect to webserver on ip: ", ip
 
 def main():
     # server_ip = "localhost:6060" # localhost
-    
     
     doc = {
         'users':users(),
@@ -390,8 +388,8 @@ def main():
     ip = doc["ip"]
     hostname = doc["hostname"]
     # scan for wireless networks to help with diagnostics
-    print "scanning for wireless networks: ip = ", ip
-    scan_w(ip, hostname)
+    # print "scanning for wireless networks: ip = ", ip
+    # scan_w(ip, hostname)
 
     server_ip = "152.146.38.56:6060" # static IP for the mini-server 
     postMachineSpecs(server_ip, doc)
